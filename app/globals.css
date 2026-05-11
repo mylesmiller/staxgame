@@ -582,12 +582,77 @@ button.primary:hover { background: #ff6347; }
 }
 .help-btn:hover { background: var(--panel-2); }
 
+/* Touch controls — hidden on desktop, shown on mobile */
+.touch-controls {
+  display: none;
+  gap: 8px;
+  margin: 12px 0 16px;
+  padding: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+.tc-btn {
+  flex: 1;
+  max-width: 80px;
+  min-height: 56px;
+  font-size: 26px;
+  font-weight: 700;
+  background: var(--panel-2);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.tc-btn:active { background: #34373d; }
+.tc-btn.drop {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.tc-btn.drop:active { background: #ff6347; }
+
 @media (max-width: 820px) {
-  .layout { grid-template-columns: 1fr; gap: 16px; }
+  .app { padding: 12px 12px 60px; }
+  .layout { grid-template-columns: 1fr; gap: 12px; }
   .side-difficulty .difficulty-bar { flex-direction: row; }
   .side-difficulty .diff-btn { padding: 8px 10px; align-items: center; }
-  .wells { grid-template-columns: 1fr; gap: 14px; justify-items: center; }
-  .queue-well { width: 110px; }
-  .hud { flex-wrap: wrap; }
-  .controls-hint { flex-wrap: wrap; justify-content: flex-start; }
+  .side-difficulty .diff-btn .diff-name { font-size: 13px; letter-spacing: 0.08em; }
+
+  /* Mobile layout: target on top (small), board big in middle, queue strip below */
+  .wells {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "target"
+      "board"
+      "queue";
+    gap: 10px;
+    justify-items: center;
+  }
+  .wells > *:nth-child(1) { grid-area: board; }
+  .wells > *:nth-child(2) { grid-area: queue; width: 100%; max-width: 360px; }
+  .wells > *:nth-child(3) { grid-area: target; }
+
+  .wells > *:nth-child(1) canvas { max-width: 90vw; height: auto; }
+  .wells > *:nth-child(3) canvas { max-width: 60vw; height: auto; }
+
+  .queue-well { width: auto; max-width: 100%; }
+  .queue-well canvas { max-width: 100%; height: auto; }
+
+  .touch-controls { display: flex; }
+
+  .hud { flex-wrap: wrap; padding: 12px 14px; gap: 12px; }
+  .controls-hint { display: none; }
+  .stat-value { font-size: 22px; }
+  .buttons { width: 100%; justify-content: center; }
 }

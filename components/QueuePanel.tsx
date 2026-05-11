@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DIFFICULTIES, type Difficulty } from '@/lib/difficulty';
 import { PIECES, type QueueEntry } from '@/lib/pieces';
 
@@ -20,20 +20,36 @@ function getCssColor(varName: string): string {
 export default function QueuePanel({ queue, queueIdx, difficulty }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const cfg = DIFFICULTIES[difficulty];
+  const [horizontal, setHorizontal] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 820px)');
+    const update = () => setHorizontal(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    canvas.width = 5 * QUEUE_CELL;
-    canvas.height = cfg.rows * cfg.cell;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const upcoming = queue.slice(queueIdx + 1, queueIdx + 1 + cfg.queueLookahead);
+    const slotW = QUEUE_CELL * 5;
+    const slotH = QUEUE_CELL * 3 + 8;
+
+    if (horizontal) {
+      canvas.width = upcoming.length * slotW;
+      canvas.height = slotH;
+    } else {
+      canvas.width = slotW;
+      canvas.height = cfg.rows * cfg.cell;
+    }
+
     ctx.fillStyle = getCssColor('--paper');
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const upcoming = queue.slice(queueIdx + 1, queueIdx + 1 + cfg.queueLookahead);
-    const slotH = QUEUE_CELL * 3 + 8;
 
     for (let i = 0; i < upcoming.length; i++) {
       const { type } = upcoming[i];
@@ -45,8 +61,13 @@ export default function QueuePanel({ queue, queueIdx, difficulty }: Props) {
       const minY = Math.min(...ys), maxY = Math.max(...ys);
       const w = maxX - minX + 1;
       const h = maxY - minY + 1;
-      const offsetX = (5 - w) * QUEUE_CELL / 2 - minX * QUEUE_CELL;
-      const offsetY = i * slotH + (slotH - h * QUEUE_CELL) / 2 - minY * QUEUE_CELL + 8;
+
+      const offsetX = horizontal
+        ? i * slotW + (slotW - w * QUEUE_CELL) / 2 - minX * QUEUE_CELL
+        : (slotW - w * QUEUE_CELL) / 2 - minX * QUEUE_CELL;
+      const offsetY = horizontal
+        ? (slotH - h * QUEUE_CELL) / 2 - minY * QUEUE_CELL
+        : i * slotH + (slotH - h * QUEUE_CELL) / 2 - minY * QUEUE_CELL + 8;
 
       for (const [sx, sy] of shape) {
         ctx.fillStyle = color;
@@ -64,11 +85,11 @@ export default function QueuePanel({ queue, queueIdx, difficulty }: Props) {
           QUEUE_CELL - 1, QUEUE_CELL - 1);
       }
     }
-  }, [queue, queueIdx, cfg]);
+  }, [queue, queueIdx, cfg, horizontal]);
 
   return (
     <div className="well-wrap">
-      <div className="well-label queue">queue →</div>
+      <div className="well-label queue">{horizontal ? 'queue' : 'queue →'}</div>
       <div className="well queue-well">
         <canvas ref={canvasRef} />
       </div>

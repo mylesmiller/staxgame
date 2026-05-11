@@ -9,12 +9,13 @@ import DifficultyBar from '@/components/DifficultyBar';
 import HUD from '@/components/HUD';
 import ResultModal from '@/components/ResultModal';
 import HowToPlay from '@/components/HowToPlay';
+import TouchControls from '@/components/TouchControls';
 import { DIFFICULTIES } from '@/lib/difficulty';
 
 const HOWTO_KEY = 'silhouette-seen-howto';
 
 export default function Page() {
-  const { state, stats, setDifficulty, newPuzzle, reset, retryKeepTime, undo, canUndo, peekNow, elapsedMs } = useGame();
+  const { state, stats, setDifficulty, newPuzzle, reset, retryKeepTime, undo, canUndo, peekNow, elapsedMs, moveLeft, moveRight, rotateCW, softDrop, hardDrop } = useGame();
   const [modalOpen, setModalOpen] = useState(false);
   const [howtoOpen, setHowtoOpen] = useState(false);
 
@@ -81,6 +82,14 @@ export default function Page() {
           />
         </section>
       </div>
+
+      <TouchControls
+        onLeft={moveLeft}
+        onRight={moveRight}
+        onRotate={rotateCW}
+        onSoftDrop={softDrop}
+        onHardDrop={hardDrop}
+      />
 
       <HUD
         elapsedMs={elapsedMs}

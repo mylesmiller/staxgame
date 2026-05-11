@@ -40,6 +40,11 @@ export interface UseGame {
   retryKeepTime: () => void;
   undo: () => void;
   canUndo: boolean;
+  moveLeft: () => void;
+  moveRight: () => void;
+  rotateCW: () => void;
+  softDrop: () => void;
+  hardDrop: () => void;
   // peekNow: current performance.now() value for animation tick
   peekNow: number;
   // stats for HUD
@@ -206,6 +211,59 @@ export function useGame(): UseGame {
     [difficulty, queue, target]
   );
 
+  const undo = useCallback(() => {
+    const snap = historyRef.current.pop();
+    if (!snap) return;
+    const conf = DIFFICULTIES[difficulty];
+    setBoard(snap.board);
+    setQueueIdx(snap.queueIdx);
+    setGameOver(false);
+    setWon(false);
+    setEndedAt(null);
+    const spawn = spawnFromQueue(queue, snap.queueIdx, snap.board, conf.cols, conf.rows);
+    setActive(spawn.active);
+  }, [difficulty, queue]);
+
+  const moveLeft = useCallback(() => {
+    if (gameOver || !active) return;
+    const conf = DIFFICULTIES[difficulty];
+    setActive((a) => (a ? gameMove(board, a, -1, { cols: conf.cols, rows: conf.rows }) : a));
+  }, [active, board, difficulty, gameOver]);
+
+  const moveRight = useCallback(() => {
+    if (gameOver || !active) return;
+    const conf = DIFFICULTIES[difficulty];
+    setActive((a) => (a ? gameMove(board, a, 1, { cols: conf.cols, rows: conf.rows }) : a));
+  }, [active, board, difficulty, gameOver]);
+
+  const rotateCW = useCallback(() => {
+    if (gameOver || !active) return;
+    const conf = DIFFICULTIES[difficulty];
+    const next = gameRotate(board, active, 1, { cols: conf.cols, rows: conf.rows });
+    if (next) setActive(next);
+  }, [active, board, difficulty, gameOver]);
+
+  const softDrop = useCallback(() => {
+    if (gameOver || !active) return;
+    const conf = DIFFICULTIES[difficulty];
+    const d = { cols: conf.cols, rows: conf.rows };
+    const res = gameSoftDrop(board, active, d);
+    if (res.locked) {
+      historyRef.current.push({ board, queueIdx });
+      advanceAfterLock(res.board, queueIdx + 1);
+    } else {
+      setActive(res.active);
+    }
+  }, [active, board, difficulty, gameOver, queueIdx, advanceAfterLock]);
+
+  const hardDrop = useCallback(() => {
+    if (gameOver || !active) return;
+    const conf = DIFFICULTIES[difficulty];
+    const nb = gameHardDrop(board, active, { cols: conf.cols, rows: conf.rows });
+    historyRef.current.push({ board, queueIdx });
+    advanceAfterLock(nb, queueIdx + 1);
+  }, [active, board, difficulty, gameOver, queueIdx, advanceAfterLock]);
+
   // Keyboard input
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -214,52 +272,35 @@ export function useGame(): UseGame {
         if (document.activeElement instanceof HTMLElement) {
           document.activeElement.blur();
         }
-        setReloadKey((k) => k + 1);
+        undo();
         return;
       }
-      if (gameOver) return;
-      if (!active) return;
-      const conf = DIFFICULTIES[difficulty];
-      const d = { cols: conf.cols, rows: conf.rows };
-
       switch (e.key) {
         case 'ArrowLeft':
           e.preventDefault();
-          setActive((a) => (a ? gameMove(board, a, -1, d) : a));
+          moveLeft();
           break;
         case 'ArrowRight':
           e.preventDefault();
-          setActive((a) => (a ? gameMove(board, a, 1, d) : a));
+          moveRight();
           break;
-        case 'ArrowDown': {
+        case 'ArrowDown':
           e.preventDefault();
-          const res = gameSoftDrop(board, active, d);
-          if (res.locked) {
-            historyRef.current.push({ board, queueIdx });
-            advanceAfterLock(res.board, queueIdx + 1);
-          } else {
-            setActive(res.active);
-          }
+          softDrop();
           break;
-        }
-        case 'ArrowUp': {
+        case 'ArrowUp':
           e.preventDefault();
-          const next = gameRotate(board, active, 1, d);
-          if (next) setActive(next);
+          rotateCW();
           break;
-        }
-        case ' ': {
+        case ' ':
           e.preventDefault();
-          const nb = gameHardDrop(board, active, d);
-          historyRef.current.push({ board, queueIdx });
-          advanceAfterLock(nb, queueIdx + 1);
+          hardDrop();
           break;
-        }
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [active, board, difficulty, gameOver, queueIdx, advanceAfterLock]);
+  }, [undo, moveLeft, moveRight, softDrop, rotateCW, hardDrop]);
 
   const setDifficulty = useCallback((d: Difficulty) => {
     setDifficultyState(d);
@@ -278,19 +319,6 @@ export function useGame(): UseGame {
     keepTimerRef.current = true;
     setReloadKey((k) => k + 1);
   }, []);
-
-  const undo = useCallback(() => {
-    const snap = historyRef.current.pop();
-    if (!snap) return;
-    const conf = DIFFICULTIES[difficulty];
-    setBoard(snap.board);
-    setQueueIdx(snap.queueIdx);
-    setGameOver(false);
-    setWon(false);
-    setEndedAt(null);
-    const spawn = spawnFromQueue(queue, snap.queueIdx, snap.board, conf.cols, conf.rows);
-    setActive(spawn.active);
-  }, [difficulty, queue]);
 
   const stats = useMemo(
     () => computeStats(board, target, dims),
@@ -320,6 +348,11 @@ export function useGame(): UseGame {
     retryKeepTime,
     undo,
     canUndo: queueIdx > 0 && !gameOver,
+    moveLeft,
+    moveRight,
+    rotateCW,
+    softDrop,
+    hardDrop,
     peekNow,
     stats,
     elapsedMs,
