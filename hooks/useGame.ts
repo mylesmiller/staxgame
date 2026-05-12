@@ -50,6 +50,7 @@ export interface UseGame {
   // stats for HUD
   stats: ReturnType<typeof computeStats>;
   elapsedMs: number;
+  setPaused: (paused: boolean) => void;
 }
 
 function spawnFromQueue(
@@ -98,6 +99,8 @@ export function useGame(): UseGame {
   const [startedAt, setStartedAt] = useState<number>(() => Date.now());
   const [endedAt, setEndedAt] = useState<number | null>(null);
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
+  const [pausedAt, setPausedAt] = useState<number | null>(null);
+  const [pausedAccumMs, setPausedAccumMs] = useState<number>(0);
 
   const peekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const peekRafRef = useRef<number | null>(null);
@@ -132,6 +135,8 @@ export function useGame(): UseGame {
       setStartedAt(now);
       setEndedAt(null);
       setNowTick(now);
+      setPausedAccumMs(0);
+      setPausedAt(null);
     }
 
     // Cancel any previous peek timers
@@ -186,10 +191,23 @@ export function useGame(): UseGame {
 
   // Tick the clock every second while playing
   useEffect(() => {
-    if (gameOver) return;
+    if (gameOver || pausedAt !== null) return;
     const id = setInterval(() => setNowTick(Date.now()), 250);
     return () => clearInterval(id);
-  }, [gameOver, startedAt]);
+  }, [gameOver, startedAt, pausedAt]);
+
+  const setPaused = useCallback((paused: boolean) => {
+    if (paused) {
+      setPausedAt((prev) => (prev === null ? Date.now() : prev));
+    } else {
+      setPausedAt((prev) => {
+        if (prev === null) return null;
+        setPausedAccumMs((acc) => acc + (Date.now() - prev));
+        setNowTick(Date.now());
+        return null;
+      });
+    }
+  }, []);
 
   // Helper: spawn next piece from the queue and possibly trigger game over / win
   const advanceAfterLock = useCallback(
@@ -325,7 +343,8 @@ export function useGame(): UseGame {
     [board, target, dims]
   );
 
-  const elapsedMs = (endedAt ?? nowTick) - startedAt;
+  const liveNow = pausedAt ?? nowTick;
+  const elapsedMs = (endedAt ?? liveNow) - startedAt - pausedAccumMs;
 
   return {
     state: {
@@ -356,5 +375,6 @@ export function useGame(): UseGame {
     peekNow,
     stats,
     elapsedMs,
+    setPaused,
   };
 }

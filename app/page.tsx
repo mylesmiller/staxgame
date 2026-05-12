@@ -15,7 +15,7 @@ import { DIFFICULTIES } from '@/lib/difficulty';
 const HOWTO_KEY = 'silhouette-seen-howto';
 
 export default function Page() {
-  const { state, stats, setDifficulty, newPuzzle, reset, retryKeepTime, undo, canUndo, peekNow, elapsedMs, moveLeft, moveRight, rotateCW, softDrop, hardDrop } = useGame();
+  const { state, stats, setDifficulty, newPuzzle, reset, retryKeepTime, undo, canUndo, peekNow, elapsedMs, moveLeft, moveRight, rotateCW, softDrop, hardDrop, setPaused } = useGame();
   const [modalOpen, setModalOpen] = useState(false);
   const [howtoOpen, setHowtoOpen] = useState(false);
 
@@ -32,6 +32,10 @@ export default function Page() {
       if (!localStorage.getItem(HOWTO_KEY)) setHowtoOpen(true);
     } catch {}
   }, []);
+
+  useEffect(() => {
+    setPaused(howtoOpen);
+  }, [howtoOpen, setPaused]);
 
   const closeHowto = () => {
     setHowtoOpen(false);
