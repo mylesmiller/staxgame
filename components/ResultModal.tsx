@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Difficulty } from '@/lib/difficulty';
 import type { Board } from '@/lib/pieces';
 import { buildShareText } from '@/lib/share';
+import { msUntilNextEtMidnight } from '@/lib/rng';
 
 interface Props {
   open: boolean;
@@ -45,6 +46,22 @@ export default function ResultModal({
   onNextDifficulty,
 }: Props) {
   const [copied, setCopied] = useState(false);
+  const [msLeft, setMsLeft] = useState<number>(() => msUntilNextEtMidnight());
+
+  useEffect(() => {
+    if (!open) return;
+    setMsLeft(msUntilNextEtMidnight());
+    const id = setInterval(() => setMsLeft(msUntilNextEtMidnight()), 1000);
+    return () => clearInterval(id);
+  }, [open]);
+
+  const countdown = useMemo(() => {
+    const total = Math.max(0, Math.floor(msLeft / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }, [msLeft]);
 
   const shareText = useMemo(() => {
     if (!open) return '';
@@ -101,6 +118,13 @@ export default function ResultModal({
               {won ? fmtTime(elapsedMs) : `${matchPct}% match`}
             </div>
           </div>
+
+          {won && (
+            <div className="result-info">
+              <div className="result-info-label">NEXT PUZZLE IN</div>
+              <div className="result-info-value">{countdown}</div>
+            </div>
+          )}
 
           <div className="result-section-label">
             {won ? 'SHARE' : 'YOUR ATTEMPT'}
