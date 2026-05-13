@@ -136,6 +136,14 @@ export default function Page() {
       />
 
       <HowToPlay open={howtoOpen} onClose={closeHowto} />
+
+      <footer className="site-footer">
+        <a href="/privacy">Privacy</a>
+        <span aria-hidden="true">·</span>
+        <a href="/terms">Terms</a>
+        <span aria-hidden="true">·</span>
+        <a href="/contact">Contact</a>
+      </footer>
     </div>
   );
 }

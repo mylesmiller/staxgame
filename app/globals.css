@@ -668,3 +668,49 @@ button.primary:hover { background: #ff6347; }
   .stat-value { font-size: 22px; }
   .buttons { width: 100%; justify-content: center; }
 }
+
+/* Site footer */
+.site-footer {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.site-footer a {
+  color: var(--muted);
+  text-decoration: none;
+}
+.site-footer a:hover { color: var(--ink); }
+
+/* Legal / contact pages */
+.legal { max-width: 760px; }
+.legal-header { display: block; border: 0; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.legal-back { color: var(--muted); text-decoration: none; font-size: 13px; }
+.legal-back:hover { color: var(--ink); }
+.legal-header h1 {
+  font-family: var(--font-fraunces), serif;
+  font-size: clamp(28px, 4vw, 40px);
+  margin: 12px 0 4px;
+}
+.legal-updated { color: var(--muted); font-size: 13px; margin: 0; }
+.legal-body { line-height: 1.65; font-size: 15px; color: var(--ink); }
+.legal-body h2 {
+  font-family: var(--font-fraunces), serif;
+  font-size: 20px;
+  margin: 28px 0 8px;
+  color: var(--ink);
+}
+.legal-body p, .legal-body ul { margin: 10px 0; }
+.legal-body ul { padding-left: 22px; }
+.legal-body li { margin: 6px 0; }
+.legal-body a { color: var(--accent); }
+.legal-body code {
+  background: var(--panel-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
